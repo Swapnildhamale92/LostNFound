@@ -6,7 +6,7 @@ package com.swapnil.lostnfound.Models;
 
 import com.google.gson.annotations.SerializedName;
 
-public class User {
+public class UserLogin {
 
     @SerializedName("email")
     private String email;
@@ -14,7 +14,7 @@ public class User {
     private String password;
 
 
-    public User(String email, String password) {
+    public UserLogin(String email, String password) {
         this.email = email;
         this.password = password;
     }

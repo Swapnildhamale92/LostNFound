@@ -4,11 +4,14 @@ package com.swapnil.lostnfound.Utils;
  * Created by swapnil on 14/9/17.
  */
 
-import com.swapnil.lostnfound.Models.Message;
-import com.swapnil.lostnfound.Models.User;
-
-import java.util.List;
-import java.util.Map;
+import com.swapnil.lostnfound.Models.ChangeForgotPassword;
+import com.swapnil.lostnfound.Models.ChangeForgotPasswordResponse;
+import com.swapnil.lostnfound.Models.ForgotPasswordMail;
+import com.swapnil.lostnfound.Models.ForgotPasswordMailResponse;
+import com.swapnil.lostnfound.Models.LoginResponse;
+import com.swapnil.lostnfound.Models.SignupResponse;
+import com.swapnil.lostnfound.Models.UserLogin;
+import com.swapnil.lostnfound.Models.UserSignUp;
 
 import retrofit2.Call;
 import retrofit2.http.Body;
@@ -19,17 +22,20 @@ import retrofit2.http.POST;
 public interface LFApiService {
 
 
-    @FormUrlEncoded
-    @POST("login/views/signup.php")
-    Call<Message> userSignUp(@Field("name") String name,
-                             @Field("email") String email,
-                             @Field("password") String password);
+    @POST("users")
+    Call<SignupResponse> userSignUp(@Body UserSignUp userSignUp);
 
     @POST("authenticate")
-    Call<Message> userLogIn(@Body User user);
+    Call<LoginResponse> userLogIn(@Body UserLogin userLogin);
+
+    @POST("users/forgotpassword")
+    Call<ForgotPasswordMailResponse> forgotPassword(@Body ForgotPasswordMail forgotPasswordMail);
+
+    @POST("users/forgotpassword")
+    Call<ChangeForgotPasswordResponse> changePassword(@Body ChangeForgotPassword changeForgotPassword);
 
     /*@POST("authenticate")
-    Call<Message> userLogIn(
+    Call<LoginResponse> userLogIn(
             @Body FetchOTP fetchOTP,
             @HeaderMap Map<String, String> headers
     );*/

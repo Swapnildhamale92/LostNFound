@@ -4,8 +4,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 
-import android.app.ProgressDialog;
-import android.content.Intent;
+import android.content.Context;
 import android.content.res.ColorStateList;
 import android.content.res.XmlResourceParser;
 import android.graphics.Typeface;
@@ -20,6 +19,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.ViewGroup;
+import android.view.WindowManager;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 import android.widget.Button;
@@ -31,14 +31,18 @@ import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
-import com.swapnil.lostnfound.Models.Message;
-import com.swapnil.lostnfound.Models.User;
+import com.swapnil.lostnfound.Models.LoginResponse;
+import com.swapnil.lostnfound.Models.UserLogin;
 import com.swapnil.lostnfound.R;
 import com.swapnil.lostnfound.Utils.LFApiClient;
 import com.swapnil.lostnfound.Utils.LFApiService;
 import com.swapnil.lostnfound.Utils.LFUtils;
 import com.swapnil.lostnfound.Views.CustomViews.LFCustomToast;
+import com.swapnil.lostnfound.Views.CustomViews.LFProgressDialog;
 
+import org.json.JSONObject;
+
+import cn.pedant.SweetAlert.SweetAlertDialog;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
@@ -53,9 +57,11 @@ public class LFLoginFragment extends Fragment implements OnClickListener {
 	private static LinearLayout loginLayout;
 	private static Animation shakeAnimation;
 	private static FragmentManager fragmentManager;
-	private ProgressDialog pDialog;
+	private LFProgressDialog        pDialog = null;
 	private String email,pass;
 	Typeface face;
+	private Context context;
+	private String token,userId;
 
 	public LFLoginFragment() {
 
@@ -66,6 +72,7 @@ public class LFLoginFragment extends Fragment implements OnClickListener {
 			Bundle savedInstanceState) {
 
 		view = inflater.inflate(R.layout.login_layout, container, false);
+		context = this.getActivity().getWindow().getContext();
 		face = Typeface.createFromAsset(getActivity().getApplicationContext().getAssets(),
 				"font/RobotoCondensed-Regular.ttf");
 		initViews();
@@ -74,6 +81,7 @@ public class LFLoginFragment extends Fragment implements OnClickListener {
 	}
 
 	// Initiate Views
+	@SuppressWarnings("ResourceType")
 	private void initViews() {
 		fragmentManager = getActivity().getSupportFragmentManager();
 
@@ -213,59 +221,103 @@ public class LFLoginFragment extends Fragment implements OnClickListener {
 	}
 
 	private void loginByServer() {
-		pDialog = new ProgressDialog(getContext());
-		pDialog.setIndeterminate(true);
-		pDialog.setMessage("Log In...");
+		getActivity().getWindow().setFlags(WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE, WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE);
+		pDialog = new LFProgressDialog(getActivity(), getResources().getString(R.string.prog_msg_PROCESS));
 		pDialog.setCancelable(false);
-
-		showpDialog();
+		pDialog.show();
 
 		email = emailid.getText().toString();
 		pass = password.getText().toString();
 
-		User user = new User(
+		UserLogin userLogin = new UserLogin(
 				email ,
 				pass
-
 		);
 
 
 		LFApiService service = LFApiClient.getClient().create(LFApiService.class);
 
-		Call<Message> userCall = service.userLogIn(user);
+		Call<LoginResponse> userCall = service.userLogIn(userLogin);
 
-		userCall.enqueue(new Callback<Message>() {
+		userCall.enqueue(new Callback<LoginResponse>() {
 			@Override
-			public void onResponse(Call<Message> call, Response<Message> response) {
-				hidepDialog();
-				//onSignupSuccess();
-				Log.d("onResponse", "" + response.body().getMessage());
+			public void onResponse(Call<LoginResponse> call, Response<LoginResponse> response) {
+
+				if (null != pDialog) {
+					pDialog.dismiss();
+					getActivity().getWindow().clearFlags(WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE);
+				}
 
 
-				if(response.body().getMessage()!= null) {
-					Toast.makeText(getActivity(), "" + response.body().getMessage(), Toast.LENGTH_SHORT).show();
+				if(response.body() != null) {
+					if (response.body().getSuccessCode() == 200) {
+						//Toast.makeText(getActivity(), "" + response.body().getMessage(), Toast.LENGTH_SHORT).show();
+						new SweetAlertDialog(context, SweetAlertDialog.SUCCESS_TYPE)
+								.setTitleText("Message")
+								.setConfirmText("OK")
+								.setContentText(response.body().getMessage())
+								.setConfirmClickListener(new SweetAlertDialog.OnSweetClickListener() {
+									@Override
+									public void onClick(SweetAlertDialog sDialog) {
+										sDialog.dismissWithAnimation();
+									}
+								})
+								.show();
+						token = response.body().getToken();
+						userId = response.body().getUserId();
 
-				}else {
-					Toast.makeText(getActivity(), "" + response.body().getMessage(), Toast.LENGTH_SHORT).show();
+					} else if (response.body().getSuccessCode() == 202) {
+						//Toast.makeText(getActivity(), "" + response.body().getMessage(), Toast.LENGTH_SHORT).show();
+						new SweetAlertDialog(context, SweetAlertDialog.ERROR_TYPE)
+								.setTitleText("Message")
+								.setContentText(response.body().getMessage())
+								.setConfirmText("Try Again")
+								.setConfirmClickListener(new SweetAlertDialog.OnSweetClickListener() {
+									@Override
+									public void onClick(SweetAlertDialog sDialog) {
+										sDialog.dismissWithAnimation();
+										emailid.setText("");
+										password.setText("");
+									}
+								})
+								.show();
+					} else if (response.body().getSuccessCode() == 203) {
+						//Toast.makeText(getActivity(), "" + response.body().getMessage(), Toast.LENGTH_SHORT).show();
+						new SweetAlertDialog(context, SweetAlertDialog.ERROR_TYPE)
+								.setTitleText("Message")
+								.setContentText(response.body().getMessage())
+								.setConfirmText("Try Again")
+								.setConfirmClickListener(new SweetAlertDialog.OnSweetClickListener() {
+									@Override
+									public void onClick(SweetAlertDialog sDialog) {
+										sDialog.dismissWithAnimation();
+										emailid.setText("");
+										password.setText("");
+									}
+								})
+								.show();
+					} else {
+						Toast.makeText(getActivity(), "" + response.body().getMessage(), Toast.LENGTH_SHORT).show();
+					}
+				} else if(response.errorBody()!=null) {
+					try {
+						JSONObject jObjError = new JSONObject(response.errorBody().string());
+						Toast.makeText(getContext(), jObjError.getString("message"), Toast.LENGTH_LONG).show();
+					} catch (Exception e) {
+						Toast.makeText(getContext(), e.getMessage(), Toast.LENGTH_LONG).show();
+					}
 				}
 			}
 
 			@Override
-			public void onFailure(Call<Message> call, Throwable t) {
-				hidepDialog();
+			public void onFailure(Call<LoginResponse> call, Throwable t) {
+				if (null != pDialog) {
+					pDialog.dismiss();
+					getActivity().getWindow().clearFlags(WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE);
+				}
 				Log.d("onFailure", t.toString());
 			}
 		});
-	}
-
-	private void showpDialog() {
-		if (!pDialog.isShowing())
-			pDialog.show();
-	}
-
-	private void hidepDialog() {
-		if (pDialog.isShowing())
-			pDialog.dismiss();
 	}
 
 }

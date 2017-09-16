@@ -1,38 +1,28 @@
 package com.swapnil.lostnfound.Models;
 
 /**
- * Created by swapnil on 14/9/17.
+ * Created by swapnil on 17/9/17.
  */
 
+public class ForgotPasswordMailResponse {
 
-public class Message {
-
-    private Integer success;
     private String message;
+
 
     /**
      * No args constructor for use in serialization
      */
-    public Message() {
+    public ForgotPasswordMailResponse() {
     }
 
     /**
      * @param message
-     * @param success
      */
-    public Message(Integer success, String message) {
+    public ForgotPasswordMailResponse(String message ) {
         super();
-        this.success = success;
         this.message = message;
     }
 
-    public Integer getSuccess() {
-        return success;
-    }
-
-    public void setSuccess(Integer success) {
-        this.success = success;
-    }
 
     public String getMessage() {
         return message;

@@ -4,25 +4,42 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 
+import android.content.Context;
 import android.content.res.ColorStateList;
 import android.content.res.XmlResourceParser;
 import android.graphics.Typeface;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.ViewGroup;
+import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.swapnil.lostnfound.Models.LoginResponse;
+import com.swapnil.lostnfound.Models.SignupResponse;
+import com.swapnil.lostnfound.Models.UserLogin;
+import com.swapnil.lostnfound.Models.UserSignUp;
 import com.swapnil.lostnfound.R;
+import com.swapnil.lostnfound.Utils.LFApiClient;
+import com.swapnil.lostnfound.Utils.LFApiService;
 import com.swapnil.lostnfound.Utils.LFUtils;
 import com.swapnil.lostnfound.Views.Activity.LFBaseActivity;
 import com.swapnil.lostnfound.Views.CustomViews.LFCustomToast;
+import com.swapnil.lostnfound.Views.CustomViews.LFProgressDialog;
+
+import org.json.JSONObject;
+
+import cn.pedant.SweetAlert.SweetAlertDialog;
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 public class LFSignUpFragment extends Fragment implements OnClickListener {
 	private static View view;
@@ -31,7 +48,10 @@ public class LFSignUpFragment extends Fragment implements OnClickListener {
 	private static TextView login , signuptitle;
 	private static Button signUpButton;
 	private static CheckBox terms_conditions;
-    Typeface face;
+	private LFProgressDialog        pDialog = null;
+	private String name,email,phone,userlocation,signup_lat,signup_long,pass;
+    private Context context;
+	Typeface face;
 
 	public LFSignUpFragment() {
 
@@ -41,6 +61,7 @@ public class LFSignUpFragment extends Fragment implements OnClickListener {
 	public View onCreateView(LayoutInflater inflater, ViewGroup container,
 			Bundle savedInstanceState) {
 		view = inflater.inflate(R.layout.signup_layout, container, false);
+        context = this.getActivity().getWindow().getContext();
         face = Typeface.createFromAsset(getActivity().getApplicationContext().getAssets(),
                 "font/RobotoCondensed-Regular.ttf");
 		initViews();
@@ -49,6 +70,7 @@ public class LFSignUpFragment extends Fragment implements OnClickListener {
 	}
 
 	// Initialize all views
+	@SuppressWarnings("ResourceType")
 	private void initViews() {
         signuptitle = (TextView) view.findViewById(R.id.signup_title);
 		fullName = (EditText) view.findViewById(R.id.fullName);
@@ -152,8 +174,95 @@ public class LFSignUpFragment extends Fragment implements OnClickListener {
 
 		// Else do signup or do your stuff
 		else
-			Toast.makeText(getActivity(), "Do SignUp.", Toast.LENGTH_SHORT)
-					.show();
+            signUpByServer();
 
+	}
+
+	private void signUpByServer() {
+		getActivity().getWindow().setFlags(WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE, WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE);
+		pDialog = new LFProgressDialog(getActivity(), getResources().getString(R.string.prog_msg_SIGNUP));
+		pDialog.setCancelable(false);
+		pDialog.show();
+
+		name = fullName.getText().toString();
+		email = emailId.getText().toString();
+		phone = mobileNumber.getText().toString();
+		userlocation = location.getText().toString();
+		pass = password.getText().toString();
+		signup_lat = "18.4422";
+		signup_long = "73.8096";
+
+		UserSignUp userSignUp = new UserSignUp(
+				name,
+				email,
+				phone,
+				userlocation,
+				signup_lat,
+				signup_long,
+				pass
+		);
+
+
+		LFApiService service = LFApiClient.getClient().create(LFApiService.class);
+
+		Call<SignupResponse> userCall = service.userSignUp(userSignUp);
+
+		userCall.enqueue(new Callback<SignupResponse>() {
+			@Override
+			public void onResponse(Call<SignupResponse> call, Response<SignupResponse> response) {
+
+				if (null != pDialog) {
+					pDialog.dismiss();
+					getActivity().getWindow().clearFlags(WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE);
+				}
+
+
+				if(response.body() != null) {
+					if (response.body().getSuccessCode() == 201) {
+						//Toast.makeText(getActivity(), "" + response.body().getMessage(), Toast.LENGTH_SHORT).show();
+						new SweetAlertDialog(context, SweetAlertDialog.SUCCESS_TYPE)
+								.setTitleText("Message")
+								.setConfirmText("OK")
+								.setContentText(response.body().getMessage())
+								.setConfirmClickListener(new SweetAlertDialog.OnSweetClickListener() {
+									@Override
+									public void onClick(SweetAlertDialog sDialog) {
+										sDialog.dismissWithAnimation();
+										new LFBaseActivity().replaceLoginFragment();
+									}
+								})
+								.show();
+
+					}
+				} else if(response.errorBody()!=null) {
+					try {
+						JSONObject jObjError = new JSONObject(response.errorBody().string());
+						//Toast.makeText(getContext(), jObjError.getString("message"), Toast.LENGTH_LONG).show();
+						new SweetAlertDialog(context, SweetAlertDialog.ERROR_TYPE)
+								.setTitleText("Message")
+								.setContentText(jObjError.getString("message"))
+								.setConfirmText("Try Again")
+								.setConfirmClickListener(new SweetAlertDialog.OnSweetClickListener() {
+									@Override
+									public void onClick(SweetAlertDialog sDialog) {
+										sDialog.dismissWithAnimation();
+									}
+								})
+								.show();
+					} catch (Exception e) {
+						Toast.makeText(getContext(), e.getMessage(), Toast.LENGTH_LONG).show();
+					}
+				}
+			}
+
+			@Override
+			public void onFailure(Call<SignupResponse> call, Throwable t) {
+				if (null != pDialog) {
+					pDialog.dismiss();
+					getActivity().getWindow().clearFlags(WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE);
+				}
+				Log.d("onFailure", t.toString());
+			}
+		});
 	}
 }

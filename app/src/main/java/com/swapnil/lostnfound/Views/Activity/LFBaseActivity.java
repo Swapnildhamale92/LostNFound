@@ -58,6 +58,8 @@ public class LFBaseActivity extends AppCompatActivity {
                 .findFragmentByTag(LFUtils.SignUp_Fragment);
         Fragment ForgotPassword_Fragment = fragmentManager
                 .findFragmentByTag(LFUtils.ForgotPassword_Fragment);
+        Fragment NewPassword_Fragment = fragmentManager
+                .findFragmentByTag(LFUtils.NewPassword_Fragment);
 
         // Check if both are null or not
         // If both are not null then replace login fragment else do backpressed
@@ -66,6 +68,8 @@ public class LFBaseActivity extends AppCompatActivity {
         if (SignUp_Fragment != null)
             replaceLoginFragment();
         else if (ForgotPassword_Fragment != null)
+            replaceLoginFragment();
+        else if (NewPassword_Fragment != null)
             replaceLoginFragment();
         else
             super.onBackPressed();

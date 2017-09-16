@@ -17,7 +17,7 @@ import retrofit2.converter.gson.GsonConverterFactory;
 
 public class LFApiClient {
 
-    public static final String BASE_URL = " http://192.168.0.126:8080/api/v1/";
+    public static final String BASE_URL = "http://192.168.2.3:8080/api/v1/";
 
     public static String url = null;
 

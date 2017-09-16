@@ -9,5 +9,5 @@ public class LFUtils {
 	public static final String Login_Fragment = "LFLoginFragment";
 	public static final String SignUp_Fragment = "LFSignUpFragment";
 	public static final String ForgotPassword_Fragment = "LFForgotPasswordFragment";
-	
+	public static final String NewPassword_Fragment = "LFNewPasswordFragment";
 }
