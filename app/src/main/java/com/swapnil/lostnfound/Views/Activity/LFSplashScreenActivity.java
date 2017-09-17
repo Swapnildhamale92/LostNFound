@@ -5,7 +5,6 @@ import android.graphics.Typeface;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.view.animation.Animation;
-import android.view.animation.AnimationUtils;
 import android.view.animation.TranslateAnimation;
 import android.widget.ImageView;
 import android.widget.TextView;

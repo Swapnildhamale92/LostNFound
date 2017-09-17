@@ -24,7 +24,8 @@
     <string name="registered_emailid">Please enter your Registered Email Id below:</string>
     <string name="new_password_hint">Please enter temporary password that you received in mail &amp; your new password below:</string>
     <string name="submit">SUBMIT</string>
-    <string name="back">BACK</string>\
+    <string name="back">BACK</string>
+    <string name="google_app_id">AIzaSyCwGoHk0KHGMffV9_UvtFYZYr1FBmH1rmA</string>
     <string name="prog_msg_PROCESS">Logging In...</string>
     <string name="prog_msg_SIGNUP">Signing In...</string>
     <string name="prog_msg_SENDINGMAIL">Sending Mail...</string>

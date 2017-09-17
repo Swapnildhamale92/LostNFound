@@ -5,6 +5,7 @@ import java.util.regex.Pattern;
 
 
 import android.content.Context;
+import android.content.Intent;
 import android.content.res.ColorStateList;
 import android.content.res.XmlResourceParser;
 import android.graphics.Typeface;
@@ -12,6 +13,7 @@ import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.ViewGroup;
@@ -22,6 +24,13 @@ import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.android.gms.common.GooglePlayServicesNotAvailableException;
+import com.google.android.gms.common.GooglePlayServicesRepairableException;
+import com.google.android.gms.common.api.Status;
+import com.google.android.gms.location.places.Place;
+import com.google.android.gms.location.places.ui.PlaceAutocomplete;
+import com.google.android.gms.location.places.ui.PlaceSelectionListener;
+import com.google.android.gms.maps.model.LatLng;
 import com.swapnil.lostnfound.Models.LoginResponse;
 import com.swapnil.lostnfound.Models.SignupResponse;
 import com.swapnil.lostnfound.Models.UserLogin;
@@ -41,7 +50,10 @@ import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
-public class LFSignUpFragment extends Fragment implements OnClickListener {
+import static android.app.Activity.RESULT_CANCELED;
+import static android.app.Activity.RESULT_OK;
+
+public class LFSignUpFragment extends Fragment implements OnClickListener,PlaceSelectionListener {
 	private static View view;
 	private static EditText fullName, emailId, mobileNumber, location,
 			password, confirmPassword;
@@ -52,6 +64,8 @@ public class LFSignUpFragment extends Fragment implements OnClickListener {
 	private String name,email,phone,userlocation,signup_lat,signup_long,pass;
     private Context context;
 	Typeface face;
+	private int              PLACE_AUTOCOMPLETE_REQUEST_CODE = 99;
+	private double           lat,lng;
 
 	public LFSignUpFragment() {
 
@@ -93,6 +107,23 @@ public class LFSignUpFragment extends Fragment implements OnClickListener {
         signUpButton.setTypeface(face);
         login.setTypeface(face);
         terms_conditions.setTypeface(face);
+
+		location.setOnTouchListener(new View.OnTouchListener() {
+			@Override
+			public boolean onTouch(View view, MotionEvent motionEvent) {
+				if(motionEvent.getAction() == MotionEvent.ACTION_DOWN) {
+					callPlaceAutocompleteActivityIntent();
+				}
+				return false;
+			}
+		});
+
+		location.setOnFocusChangeListener(new View.OnFocusChangeListener() {
+			@Override
+			public void onFocusChange(View view, boolean hasFocus) {
+				if(hasFocus) callPlaceAutocompleteActivityIntent();
+			}
+		});
 
 		// Setting text selector over textviews
 		XmlResourceParser xrp = getResources().getXml(R.drawable.text_selector);
@@ -189,8 +220,6 @@ public class LFSignUpFragment extends Fragment implements OnClickListener {
 		phone = mobileNumber.getText().toString();
 		userlocation = location.getText().toString();
 		pass = password.getText().toString();
-		signup_lat = "18.4422";
-		signup_long = "73.8096";
 
 		UserSignUp userSignUp = new UserSignUp(
 				name,
@@ -264,5 +293,52 @@ public class LFSignUpFragment extends Fragment implements OnClickListener {
 				Log.d("onFailure", t.toString());
 			}
 		});
+	}
+
+	private void callPlaceAutocompleteActivityIntent() {
+		try {
+			Intent intent =
+					new PlaceAutocomplete.IntentBuilder(PlaceAutocomplete.MODE_FULLSCREEN)
+							.build(getActivity());
+			startActivityForResult(intent, PLACE_AUTOCOMPLETE_REQUEST_CODE);
+			//PLACE_AUTOCOMPLETE_REQUEST_CODE is integer for request code
+		} catch (GooglePlayServicesRepairableException | GooglePlayServicesNotAvailableException e) {
+			// TODO: Handle the error.
+		}
+	}
+
+	@Override
+	public void onActivityResult(int requestCode, int resultCode, Intent data) {
+		super.onActivityResult(requestCode, resultCode, data);
+		//autocompleteFragment.onActivityResult(requestCode, resultCode, data);
+		if (requestCode == PLACE_AUTOCOMPLETE_REQUEST_CODE) {
+			if (resultCode == RESULT_OK) {
+				Place place = PlaceAutocomplete.getPlace(getActivity(), data);
+				this.onPlaceSelected(place);
+				Log.i("LOSTNFOUND", "Place:" + place.toString());
+			} else if (resultCode == PlaceAutocomplete.RESULT_ERROR) {
+				Status status = PlaceAutocomplete.getStatus(getActivity(), data);
+				Log.i("LOSTNFOUND", status.getStatusMessage());
+			} else if (requestCode == RESULT_CANCELED) {
+
+			}
+		}
+	}
+
+	@Override
+	public void onPlaceSelected(Place place) {
+		if(place.getName() != null) {
+			location.setText(place.getName());
+			LatLng latLng = place.getLatLng();
+			lat = latLng.latitude;
+			lng = latLng.longitude;
+			signup_lat = String.valueOf(lat);
+			signup_long = String.valueOf(lng);
+		}
+	}
+
+	@Override
+	public void onError(Status status) {
+
 	}
 }
