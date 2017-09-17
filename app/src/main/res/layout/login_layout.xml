@@ -1,7 +1,17 @@
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="fill_parent"
     android:layout_height="fill_parent"
-    android:padding="20dp" >
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:padding="20dp">
+
+    <ImageView
+        android:id="@+id/imageView"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:srcCompat="@drawable/ic_launcher"
+        android:layout_weight="0.27"
+        android:layout_above="@+id/login_layout"
+        android:layout_alignParentTop="true" />
 
     <LinearLayout
         android:id="@+id/login_layout"
